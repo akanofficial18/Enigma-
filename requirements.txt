@@ -1,0 +1,6 @@
+flask>=3.0
+pandas>=2.0
+numpy>=1.24
+# Hugging Face model (IBM Granite TinyTimeMixer). Without these the app still runs on the visible fallback forecaster.
+torch>=2.1
+granite-tsfm>=0.2.20

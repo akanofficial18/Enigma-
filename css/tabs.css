@@ -1,0 +1,16 @@
+/* tabs.css - feature tabs and the new analyser / rehab panels. */
+[hidden]{display:none!important}
+.tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line);margin-bottom:16px;scrollbar-width:thin}
+.tabs button{flex:none;border:0;background:transparent;padding:10px 14px;font-family:var(--font-d);font-size:16px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-1px}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.two{display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:900px){.two{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.stack{display:flex;flex-direction:column;gap:10px;min-width:0}
+.stack textarea{min-height:200px}
+select,input[type=file]{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.issue{margin:0;border-left:4px solid var(--warn);padding:6px 10px;border-radius:0 6px 6px 0;background:color-mix(in srgb,var(--warn) 10%,transparent);font-size:13px}
+.issue.crit{border-color:var(--crit);background:color-mix(in srgb,var(--crit) 10%,transparent)}
+.issue.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 10%,transparent)}
+.stage{position:relative;aspect-ratio:4/3;background:#050B0A;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.stage video,.stage canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transform:scaleX(-1)}
+.stage-msg{position:absolute;inset:0;display:grid;place-items:center;color:#9DB3AE;text-align:center;padding:16px;font-size:13px}

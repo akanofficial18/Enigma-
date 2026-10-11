@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sentinel Vitals</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/watch.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/tabs.css">
+<link rel="stylesheet" href="css/intro.css">
+</head>
+<body>
+<div id="gate" data-stage="intro">
+  <canvas id="gateCan" aria-hidden="true"></canvas>
+  <button type="button" id="gSkip">Skip</button>
+  <div id="gTag">Vital signs · Always watching</div>
+  <div id="gLogin">
+    <form class="lcard" id="gForm" novalidate>
+      <div class="lbrand"><i></i><h1>Sentinel Vitals</h1></div>
+      <p class="sub">Sign in to your health dashboard</p>
+      <label>Email<input type="email" id="gEmail" autocomplete="email" placeholder="name@example.com" required></label>
+      <label>Password<span class="pw"><input type="password" id="gPass" autocomplete="current-password" placeholder="At least 6 characters" required><button type="button" id="gShow">Show</button></span></label>
+      <div class="err" id="gErr" role="alert"></div>
+      <button type="submit" class="go">Sign in</button>
+      <div class="lfoot">Prototype sign-in: any valid email works. Nothing is sent anywhere.</div>
+    </form>
+  </div>
+</div>
+<div id="app" class="sv" data-status="normal">
+  <header class="top">
+    <div class="brand">
+      <span class="mark" aria-hidden="true"></span>
+      <h1>Sentinel Vitals</h1>
+      <span class="tag">Kaggle smartwatch data · AI model</span>
+    </div>
+    <div class="row">
+      <span class="chip" id="syncChip">Connecting…</span>
+      <span class="small muted" id="userEmail"></span><button type="button" class="btn sm signout" id="signOut" hidden>Sign out</button>
+      <a class="btn sm" id="watchLink" href="watch.html" target="_blank" rel="noopener">Open smartwatch view</a>
+    </div>
+  </header>
+
+  <!-- Alert banner: normal / warning / critical -->
+  <div class="banner" id="banner" role="status" aria-live="polite">
+    <div class="bn-t"><span id="bnTitle">Normal</span><span class="bn-sub" id="bnSub"></span></div>
+    <ul id="bnList"></ul>
+    <div class="row" id="bnAct" hidden><button type="button" class="btn" id="bnBtn">Go to doctor message</button></div>
+  </div>
+
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Features"></nav>
+
+  <!-- Main page: health radar with details -->
+  <section class="card hero" id="cHero" data-tab="overview" aria-label="Health radar">
+    <div class="card-h">
+      <h2>Health radar</h2>
+      <span class="live"><i></i><span id="liveClock">--:--:--</span></span>
+    </div>
+    <div class="hero-grid">
+      <div class="radar-box">
+        <svg id="mainRadar" viewBox="-220 -192 440 384" role="img" aria-label="Radar of heart rate, SpO2, steps, activity, sleep and stress: now, five-minute average and baseline"></svg>
+        <div class="legend"><span><i></i>Now</span><span><i class="a"></i>5-minute average</span><span><i class="b"></i>Your baseline</span></div>
+      </div>
+      <div class="hero-side">
+        <div class="tblwrap"><table>
+          <thead><tr><th>Parameter</th><th>Now</th><th>5-min avg</th><th>Baseline</th><th>State</th></tr></thead>
+          <tbody id="axisBody"></tbody>
+        </table></div>
+        <dl class="meta" id="heroMeta"></dl>
+      </div>
+    </div>
+  </section>
+
+  <div class="grid">
+    <div class="col">
+      <div class="card" id="cMon" data-tab="monitor">
+        <div class="card-h"><h2>Live monitoring</h2><span class="chip info">Updates every second</span></div>
+        <div class="tiles" id="tiles"></div>
+        <div>
+          <div class="card-h"><h3>Heart rate, last 60 seconds</h3><span class="small muted">dashed line = your resting baseline</span></div>
+          <div class="chartbox" id="hrChart"></div>
+        </div>
+      </div>
+
+      <div class="card" id="cRules" data-tab="monitor">
+        <div class="card-h"><h2>Anomaly detection</h2><span class="chip info">Rule-based</span></div>
+        <p class="muted small">Each new reading is checked against fixed limits, your baseline, and combinations of signals. Single rules look at one number; combined rules need two signals to agree.</p>
+        <ul class="rules" id="rules"></ul>
+        <h3>Smart alerts</h3>
+        <div class="levels">
+          <div><span class="chip normal">Normal</span>Readings sit inside your usual pattern for what you are doing.</div>
+          <div><span class="chip warning">Warning</span>One or more readings drift from baseline. Keep watching and rest.</div>
+          <div><span class="chip critical">Critical</span>A serious reading or a dangerous combination. Prominent red alert.</div>
+        </div>
+        <div class="row"><span class="chip">Planned</span><span class="small muted">Duplicate-alert reduction: group repeats of the same alert and add a cooldown. For now an alert is logged once when it starts or changes.</span></div>
+      </div>
+
+      <div class="card" id="cHist" data-tab="doctor">
+        <div class="card-h"><h2>Health history</h2>
+          <div class="row">
+            <button type="button" class="btn sm" id="btnCsv">Export CSV</button>
+            <button type="button" class="btn sm" id="btnClear">Clear history</button>
+          </div>
+        </div>
+        <h3>Event log</h3>
+        <div class="tblwrap"><table class="log-tbl">
+          <thead><tr><th>Time</th><th>Status</th><th>What happened</th><th>HR</th><th>SpO₂</th><th>Stress</th></tr></thead>
+          <tbody id="logBody"></tbody>
+        </table></div>
+        <p class="small muted" id="logEmpty" hidden>No events yet. Use the emergency spike to create one.</p>
+        <div id="csvPanel" hidden>
+          <div class="row"><strong>CSV export</strong><span class="small muted">If your browser blocked the download, copy this text into a .csv file.</span></div>
+          <textarea id="csvText" readonly style="min-height:130px;margin-block:8px" aria-label="CSV export text"></textarea>
+          <div class="row"><button type="button" class="btn primary sm" id="btnCsvCopy">Copy CSV</button><button type="button" class="btn sm" id="btnCsvClose">Close</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="card" id="cSim" data-tab="monitor">
+        <h2>Replay and injection controls</h2>
+        <label class="f">Activity
+          <div class="seg" id="actSeg" role="group" aria-label="Activity">
+            <button type="button" data-a="auto" aria-pressed="true">Auto (follows data)</button>
+            <button type="button" data-a="rest" aria-pressed="false">Resting</button>
+            <button type="button" data-a="walk" aria-pressed="false">Walking</button>
+            <button type="button" data-a="run" aria-pressed="false">Running</button>
+          </div>
+        </label>
+        <div class="row">
+          <button type="button" class="btn" data-sc="normal">Back to normal</button>
+          <button type="button" class="btn" data-sc="warn">Warning demo</button>
+        </div>
+        <button type="button" class="btn danger" data-sc="spike" id="btnSpike">Emergency spike</button>
+        <p class="small muted">Emergency spike: heart rate 160 bpm at rest while SpO₂ falls to 88%. These controls also change the smartwatch view.</p>
+      </div>
+
+      <div class="card" id="cMirror" data-tab="overview">
+        <div class="card-h"><h2>Smartwatch preview</h2><span class="chip info">Synced</span></div>
+        <div class="mirror">
+          <div class="watch"><div class="face">
+            <div class="w-time" id="mTime">--:--</div>
+            <svg id="mirrorRadar" viewBox="-220 -192 440 384" role="img" aria-label="Smartwatch radar"></svg>
+            <div class="w-alert" id="mAlert"></div>
+          </div></div>
+          <p class="small muted" style="text-align:center">What the watch shows: the radar only. Open the watch page in another window to see it update together with this page.</p>
+        </div>
+      </div>
+
+      <div class="card" id="cBase" data-tab="overview">
+        <div class="card-h"><h2>Personal baseline</h2><span class="chip" id="baseChip">Learning</span></div>
+        <div class="bar" role="progressbar" aria-label="Baseline learning" aria-valuemin="0" aria-valuemax="100" id="baseBar"><i id="baseFill"></i></div>
+        <p class="small muted" id="baseTxt"></p>
+        <div class="kv" id="baseKv"></div>
+        <div class="row"><button type="button" class="btn sm" id="btnRelearn">Restart learning</button></div>
+      </div>
+
+      <div class="card" id="cDoc" data-tab="doctor">
+        <div class="card-h"><h2>Doctor notification</h2><span class="chip info">Simulated</span></div>
+        <label class="f">Patient name<input type="text" id="ptName" value="Demo User"></label>
+        <label class="f">Message<textarea id="msg" aria-label="Doctor message"></textarea></label>
+        <div class="row">
+          <button type="button" class="btn primary" id="btnCopy">Copy message</button>
+          <button type="button" class="btn" id="btnRegen">Use current readings</button>
+          <button type="button" class="btn" id="btnSend">Mark as sent</button>
+        </div>
+        <p class="small muted">Nothing is sent. A delivery service (SMS, email, hospital system) would plug in here.</p>
+      </div>
+
+      <div class="card" id="cRem" data-tab="doctor">
+        <h2>Reminders</h2>
+        <ul class="rem" id="remList"></ul>
+        <form class="row" id="remForm" style="align-items:flex-end;flex-wrap:nowrap">
+          <label class="f" style="flex:1;min-width:0">New reminder<input type="text" id="remLabel" placeholder="Take a short walk"></label>
+          <label class="f" style="width:80px;flex:none">In (min)<input type="number" id="remMin" min="1" max="600" value="5"></label>
+          <button type="submit" class="btn">Add</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <section class="card" data-tab="rx" id="cRx" hidden>
+    <div class="card-h"><h2>Prescription analyser</h2><span class="chip info">Rule-based</span></div>
+    <div class="two">
+      <div class="stack">
+        <label class="f">Photo of the prescription (optional, read on your device with OCR)<input type="file" id="rxFile" accept="image/*"></label>
+        <label class="f">Prescription text, one medicine per line<textarea id="rxText" placeholder="Tab Paracetamol 500 mg 1-0-1 x 5 days"></textarea></label>
+        <label class="f">Known allergies, comma separated<input type="text" id="rxAllergy" placeholder="penicillin, sulfa"></label>
+        <div class="row"><button type="button" class="btn primary" id="rxGo">Analyse</button><button type="button" class="btn" id="rxSample">Load sample</button><span class="small muted" id="rxStatus"></span></div>
+      </div>
+      <div class="stack" id="rxOut"><p class="muted small">Results appear here: each medicine, daily dose, duration, interactions and allergy matches.</p></div>
+    </div>
+  </section>
+
+  <section class="card" data-tab="report" id="cReport" hidden>
+    <div class="card-h"><h2>Report analyser</h2><span class="chip info">Rule-based</span></div>
+    <div class="two">
+      <div class="stack">
+        <label class="f">Photo of the lab report (optional, read on your device with OCR)<input type="file" id="rpFile" accept="image/*"></label>
+        <label class="f">Report text, one result per line<textarea id="rpText" placeholder="Hemoglobin 12.4 g/dL"></textarea></label>
+        <label class="f">Sex (changes some reference ranges)<select id="rpSex"><option value="m">Male</option><option value="f">Female</option></select></label>
+        <div class="row"><button type="button" class="btn primary" id="rpGo">Analyse</button><button type="button" class="btn" id="rpSample">Load sample</button><span class="small muted" id="rpStatus"></span></div>
+      </div>
+      <div class="stack" id="rpOut"><p class="muted small">Results appear here: every value against its typical adult range.</p></div>
+    </div>
+  </section>
+
+  <section class="card" data-tab="rehab" id="cRehab" hidden>
+    <div class="card-h"><h2>Rehabilitation coach</h2><span class="chip info">Camera · on-device</span></div>
+    <div class="two">
+      <div class="stack">
+        <div class="stage"><video id="rbVid" playsinline muted></video><canvas id="rbCan"></canvas><div class="stage-msg" id="rbMsg">Camera is off</div></div>
+        <div class="row"><button type="button" class="btn primary" id="rbStart">Start camera</button><button type="button" class="btn danger" id="rbStop" hidden>Stop and save session</button>
+          <label class="row small muted"><input type="checkbox" id="rbLines" checked> Join dots with lines</label></div>
+      </div>
+      <div class="stack">
+        <label class="f">Exercise<select id="rbEx"></select></label>
+        <label class="f">Target reps<input type="number" id="rbTarget" min="1" max="100" value="10"></label>
+        <div class="tiles">
+          <div class="tile"><span class="lbl">Reps</span><div class="val" id="rbReps">0</div></div>
+          <div class="tile"><span class="lbl">Joint angle</span><div class="val" id="rbAng">--</div></div>
+          <div class="tile"><span class="lbl">Movement</span><div class="val" id="rbMv" style="font-size:20px">--</div></div>
+          <div class="tile"><span class="lbl">Avg range</span><div class="val" id="rbRom">--</div></div>
+        </div>
+        <p class="issue ok" id="rbCoach">Pick an exercise and start the camera.</p>
+        <p class="small muted" id="rbTip"></p>
+        <p class="small muted">Video never leaves your device. Dots are the body joints found by a pose model. This is a training aid, not a physiotherapist: stop if you feel pain.</p>
+      </div>
+    </div>
+  </section>
+
+  <div id="toast" role="status"></div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/rules.js"></script>
+<script src="js/data.js"></script>
+<script src="js/local.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/sync.js"></script>
+<script src="js/radar.js"></script>
+<script src="js/tabs.js"></script>
+<script src="js/rx.js"></script>
+<script src="js/report.js"></script>
+<script src="js/rehab.js"></script>
+<script src="js/app.js"></script>
+<script src="js/intro.js"></script>
+</body>
+</html>

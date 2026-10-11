@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sentinel Vitals Watch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/watch.css">
+</head>
+<body>
+<main class="sv watch-page" id="app" data-status="normal">
+  <div class="watch">
+    <div class="face">
+      <div class="w-time" id="wTime">--:--</div>
+      <svg id="wRadar" viewBox="-220 -192 440 384" role="img" aria-label="Radar of heart rate, SpO2, skin temperature, activity, respiratory rate and stress"></svg>
+      <div class="w-alert" id="wAlert"></div>
+    </div>
+  </div>
+  <p class="note" id="wNote">Smartwatch app. It shows only the radar; open the Sentinel Vitals app on your phone or laptop for details.</p>
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/rules.js"></script>
+<script src="js/data.js"></script>
+<script src="js/local.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/sync.js"></script>
+<script src="js/radar.js"></script>
+<script src="js/watch.js"></script>
+</body>
+</html>
